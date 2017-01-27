@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
         */
 
         // thread method 2 : thread with handler
+        /*
         handler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
@@ -80,12 +81,26 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         thread.start();
+        */
+
+        // thread method 3: handler only
+        handler = new Handler(Looper.getMainLooper()) {
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                counter++;
+                tvCounter.setText(counter + "");
+                if (counter < 100)
+                    sendEmptyMessageDelayed(0, 1000);
+            }
+        };
+        handler.sendEmptyMessageDelayed(0, 1000);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
-        thread.interrupt();
+        //thread.interrupt();
     }
 }
