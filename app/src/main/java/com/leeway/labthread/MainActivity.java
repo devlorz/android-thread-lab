@@ -1,5 +1,6 @@
 package com.leeway.labthread;
 
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -19,6 +20,8 @@ public class MainActivity extends AppCompatActivity {
     HandlerThread backgroundHandlerThread;
     Handler backgroundHandler;
     Handler mainHandler;
+
+    SampleAsyncTask sampleAsyncTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
         */
 
         // Thread method 4
+        /*
         backgroundHandlerThread = new HandlerThread("BackgroundHandlerThread");
         backgroundHandlerThread.start();
 
@@ -135,6 +139,11 @@ public class MainActivity extends AppCompatActivity {
         Message msgBack = new Message();
         msgBack.arg1 = 0;
         backgroundHandler.sendMessageDelayed(msgBack, 1000);
+        */
+
+        // thread method 5: AsyncTask
+        sampleAsyncTask = new SampleAsyncTask();
+        sampleAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, 0, 100);
     }
 
     @Override
@@ -142,6 +151,40 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
 
         //thread.interrupt();
-        backgroundHandlerThread.quit();
+        //backgroundHandlerThread.quit();
+        sampleAsyncTask.cancel(true);
+    }
+
+    class SampleAsyncTask extends AsyncTask<Integer, Float, Boolean> {
+
+        @Override
+        protected Boolean doInBackground(Integer... integers) {
+            // run in background thread
+            int start = integers[0]; //0
+            int end = integers[1];  //100
+            for (int i = start; i < end; i++) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                }
+                publishProgress(i + 0.0f);
+            }
+            return true;
+        }
+
+        @Override
+        protected void onProgressUpdate(Float... values) {
+            // run on main thread
+            super.onProgressUpdate(values);
+            float progress = values[0];
+            tvCounter.setText(progress + "%");
+        }
+
+        @Override
+        protected void onPostExecute(Boolean aBoolean) {
+            // run on main thread
+            super.onPostExecute(aBoolean);
+            // work with boolean
+        }
     }
 }
