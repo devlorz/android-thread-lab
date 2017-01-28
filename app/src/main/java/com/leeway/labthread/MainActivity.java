@@ -1,6 +1,7 @@
 package com.leeway.labthread;
 
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
@@ -14,6 +15,10 @@ public class MainActivity extends AppCompatActivity {
 
     Thread thread;
     Handler handler;
+
+    HandlerThread backgroundHandlerThread;
+    Handler backgroundHandler;
+    Handler mainHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
         */
 
         // thread method 3: handler only
+        /*
         handler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
@@ -95,6 +101,40 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         handler.sendEmptyMessageDelayed(0, 1000);
+        */
+
+        // Thread method 4
+        backgroundHandlerThread = new HandlerThread("BackgroundHandlerThread");
+        backgroundHandlerThread.start();
+
+        backgroundHandler = new Handler(backgroundHandlerThread.getLooper()) {
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                // background
+                Message msgMain = new Message();
+                msgMain.arg1 = msg.arg1 + 1;
+                mainHandler.sendMessage(msgMain);
+            }
+        };
+
+        mainHandler = new Handler(Looper.getMainLooper()) {
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                // main thread
+                tvCounter.setText(msg.arg1 + "");
+                if (msg.arg1 < 100) {
+                    Message msgBack = new Message();
+                    msgBack.arg1 = msg.arg1;
+                    backgroundHandler.sendMessageDelayed(msgBack, 1000);
+                }
+            }
+        };
+
+        Message msgBack = new Message();
+        msgBack.arg1 = 0;
+        backgroundHandler.sendMessageDelayed(msgBack, 1000);
     }
 
     @Override
@@ -102,5 +142,6 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
 
         //thread.interrupt();
+        backgroundHandlerThread.quit();
     }
 }
