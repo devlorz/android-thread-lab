@@ -1,15 +1,19 @@
 package com.leeway.labthread;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Object> {
 
     TextView tvCounter;
     int counter;
@@ -142,8 +146,11 @@ public class MainActivity extends AppCompatActivity {
         */
 
         // thread method 5: AsyncTask
-        sampleAsyncTask = new SampleAsyncTask();
-        sampleAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, 0, 100);
+        //sampleAsyncTask = new SampleAsyncTask();
+        //sampleAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, 0, 100);
+
+        // thread method 6: AsyncTaskLoader
+        getSupportLoaderManager().initLoader(1, null, this);
     }
 
     @Override
@@ -152,7 +159,56 @@ public class MainActivity extends AppCompatActivity {
 
         //thread.interrupt();
         //backgroundHandlerThread.quit();
-        sampleAsyncTask.cancel(true);
+        //sampleAsyncTask.cancel(true);
+    }
+
+    @Override
+    public Loader<Object> onCreateLoader(int id, Bundle args) {
+        if (id == 1) {
+            return new AdderAsyncTaskLoader(MainActivity.this, 5, 11);
+        }
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Object> loader, Object data) {
+        if(loader.getId() == 1) {
+            Integer result = (Integer) data;
+            tvCounter.setText(result + "");
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Object> loader) {
+
+    }
+
+    static class AdderAsyncTaskLoader extends AsyncTaskLoader<Object> {
+
+        int a, b;
+
+        public AdderAsyncTaskLoader(Context context, int a, int b) {
+            super(context);
+            this.a = a;
+            this.b = b;
+        }
+
+        @Override
+        protected void onStartLoading() {
+            super.onStartLoading();
+            forceLoad();
+        }
+
+        @Override
+        // asynctask doinbackground
+        public Integer loadInBackground() {
+            // background thread
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+            }
+            return a + b;
+        }
     }
 
     class SampleAsyncTask extends AsyncTask<Integer, Float, Boolean> {
